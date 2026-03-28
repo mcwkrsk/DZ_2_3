@@ -8,78 +8,113 @@ namespace ConsoleApp2.dip
 {
     internal class Case3
     {
-        public class MySQLDatabase
+        // Абстракция для работы с БД
+        public interface IDatabase
         {
-            private string connectionString;
+            void Connect();
+            void Disconnect();
+            List<string> GetRecords();
+        }
+
+        // Абстракция для записи логов 
+        public interface ILogWriter
+        {
+            void WriteLogEntry(string entry);
+        }
+
+        // Реализация базы данных MySQL
+        public class MySQLDatabase : IDatabase
+        {
+            private const int ConnectionDelayMs = 3000; // Без магических цифр
+            private readonly string _connectionString; // Чтобы не путать с тем что в методах
+            // Поэтому везде добавил приставку _
+
+            // Конструктор
             public MySQLDatabase(string connectionString)
             {
-                this.connectionString = connectionString; 
+                _connectionString = connectionString;
             }
 
             public void Connect()
             {
-                Thread.Sleep(3000);
-                Console.WriteLine($"Connection done {connectionString}");
+                Thread.Sleep(ConnectionDelayMs);
+                Console.WriteLine($"Connection done {_connectionString}"); // Мне интерполяция не нравится
             }
 
             public void Disconnect()
             {
-                // NOIMPL
+                Console.WriteLine($"Disconnected from {_connectionString}"); // Но в этом конкатенации нет
             }
 
             public List<string> GetRecords()
             {
                 return new List<string> { "data1", "data2" };
             }
+        }
+
+        // Реализация логирования в файл
+        public class FileLogWriter : ILogWriter
+        {
+            private readonly string _filePath;
+
+            public FileLogWriter(string filePath = "log.txt")
+            {
+                _filePath = filePath;
+            }
 
             public void WriteLogEntry(string entry)
             {
-                File.WriteAllText("log.txt", entry);
+                File.WriteAllText(_filePath, entry);
             }
         }
 
+        // Генератор отчётов, зависящий от абстракций
         public class ReportGenerator
         {
-            private MySQLDatabase database;
-            private List<string> reportData = [];
+            private const int MaxReportItems = 100;
+            private readonly IDatabase _database;
+            private readonly ILogWriter _logWriter;
+            private List<string> _reportData = new List<string>();
 
-            public ReportGenerator()
+            public ReportGenerator(IDatabase database, ILogWriter logWriter)
             {
-                database = new MySQLDatabase("mysql://dsadlkasjdklasjdaklsjd");
+                _database = database ?? throw new ArgumentNullException(nameof(database));
+                _logWriter = logWriter ?? throw new ArgumentNullException(nameof(logWriter));
             }
 
             public void GenerateReport()
             {
-                database.Connect();
-                reportData = database.GetRecords();
+                _database.Connect();
+                _reportData = _database.GetRecords();
 
                 ProcessData();
-                var s = FormatReport();
-                SaveReport(string.Join(';', s));
+                var formattedLines = FormatReport();
+                SaveReport(string.Join(';', formattedLines));
             }
 
             private void ProcessData()
             {
-                if (reportData.Count > 100)
+                if (_reportData.Count > MaxReportItems)
                 {
-                    reportData = reportData.GetRange(0, 100);
+                    _reportData = _reportData.GetRange(0, MaxReportItems);
                 }
             }
 
             private List<string> FormatReport()
             {
-                var res = new List<string>();
-                foreach (var item in reportData)
+                var result = new List<string>();
+                foreach (var item in _reportData)
                 {
-                    res.Add($"Item: {item.ToUpper()}");
-                    Console.WriteLine($"Item: {item.ToUpper()}");
+                    var formatted = $"Item: {item.ToUpper()}";
+                    result.Add(formatted);
+                    Console.WriteLine(formatted);
                 }
-                return res;
+                return result;
             }
 
-            public void SaveReport(string formattedText)
+            private void SaveReport(string formattedText)
             {
-                database.WriteLogEntry(formattedText);
+                _logWriter.WriteLogEntry(formattedText);
             }
         }
     }
