@@ -8,15 +8,39 @@ namespace ConsoleApp2.isp
 {
     internal class Case2
     {
-        public interface IMultiFunctionDevice
+        // Узкие интерфейсы
+        // Звонки
+        public interface ICallable
         {
             void Call(string number);
+        }
+
+        // Поиск
+        public interface IBrowsable
+        {
             void Browse(string url);
+        }
+
+        // Фото
+        public interface IPhotographable
+        {
             void TakePhoto();
+        }
+
+        // Почта
+        public interface IEmailSendable
+        {
             void SendEmail(string recipient, string subject, string body);
         }
 
-        public class SmartPhone : IMultiFunctionDevice
+        // Плеер
+        public interface IMusicPlayable
+        {
+            void PlayMusic();
+        }
+
+        // Смартфон поддерживает все функции
+        public class SmartPhone : ICallable, IBrowsable, IPhotographable, IEmailSendable, IMusicPlayable
         {
             public string Model { get; set; }
             public string OS { get; set; }
@@ -29,7 +53,7 @@ namespace ConsoleApp2.isp
 
             public void Call(string number)
             {
-                Console.WriteLine("SmartPhone " + Model + " calling " + number);
+                Console.WriteLine("SmartPhone " + Model + " calling "+ number);
             }
 
             public void Browse(string url)
@@ -53,7 +77,8 @@ namespace ConsoleApp2.isp
             }
         }
 
-        public class BasicPhone : IMultiFunctionDevice
+        // Базовый телефон поддерживает только звонки, фото и SMS (но SMS не входит в интерфейсы)
+        public class BasicPhone : ICallable, IPhotographable
         {
             public string Model { get; set; }
 
@@ -67,26 +92,16 @@ namespace ConsoleApp2.isp
                 Console.WriteLine("BasicPhone " + Model + " calling " + number);
             }
 
-            public void Browse(string url)
-            {
-                throw new NotSupportedException("BasicPhone " + Model + " does not support browsing.");
-            }
-
             public void TakePhoto()
             {
                 Console.WriteLine("BasicPhone " + Model + " takes a very low quality photo");
             }
 
-            public void SendEmail(string recipient, string subject, string body)
-            {
-                throw new NotSupportedException("BasicPhone " + Model + " does not support sending emails.");
-            }
-
+            // Базовый телефон может только в смс, не в почту
             public void SendSMS(string recipient, string message)
             {
                 Console.WriteLine("BasicPhone " + Model + " sending SMS to " + recipient);
             }
         }
-
     }
 }
